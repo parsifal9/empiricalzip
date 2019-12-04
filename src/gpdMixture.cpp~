@@ -1,0 +1,64 @@
+//' Fits a zero-inflated generalized Poisson by EM 
+//' 
+//' @param x The data.
+//' @export
+
+#include <Rcpp.h>
+using namespace Rcpp;
+
+
+// [[Rcpp::export]]
+NumericVector  gpdMixture(NumericVector x,double eta, double lambda, double theta){
+  double m = x.size();
+  double tt;
+  LogicalVector workspace(m);
+  NumericVector workspace2(m);
+  NumericVector f12(m);
+  NumericVector gpd(m);
+  NumericVector r(m);
+  
+  // for(int i =0; i< m; i++){
+  //   for(int j =0; j< m; j++){
+  //     workspace(j) = x[i]==x[j]; 
+  //   }
+  //   f12(i)=m/sum(workspace);
+  // }
+  //works but very slow
+
+  workspace2 = sort_unique(x); //even thought x is sorted -- "unique" is not is ascending order
+  for(int i =0; i< workspace2.size() ; i++){
+    workspace = workspace2(i)==x;
+    tt=  sum(workspace);
+    for(int j =0; j< m; j++){
+      if( workspace(j)){
+	f12(j) = m/tt;
+      }
+    }
+  }
+
+  
+  gpd = exp(log(lambda) + (x - 1)*log(lambda + theta*x) - lfactorial(x)  - lambda - theta*x) + pow(10,-10);
+  
+  r = 1.0*(x==0) ;
+  r = eta*r  +(1-eta)*gpd + pow(10,-10);
+  r = r*f12;
+  return r;
+}
+
+// gpd <- function(x, lambda, theta){
+//   r <- exp(log(lambda) + (x - 1)*log(lambda + theta*x) - lfactorial(x) - lambda - theta*x) + 10^(-10)
+//   return(r)
+// }
+
+// gpdMixture <- function(x,eta,lambda, theta){
+//   r <- eta*(1*(x==0))+(1-eta)*gpd(x,lambda,theta) + 10^(-10)
+//   return(r) 
+// }
+  
+// f12 <- function(x, M){
+//   y <- rep(0, length(x))
+//   for(i in 1:length(x)){
+//     y[i] <- M/length(x[which(x==x[i])])
+//   }
+//   return(y)
+// }

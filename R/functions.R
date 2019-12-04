@@ -1,0 +1,924 @@
+#' @export
+gpd <- function(x, lambda, theta){
+  r <- exp(log(lambda) + (x - 1)*log(lambda + theta*x) - lfactorial(x) - lambda - theta*x) + 10^(-10)
+  return(r)
+}
+
+# @export
+#gpdMixture <- function(x,eta,lambda, theta){
+#  r <- eta*(1*(x==0))+(1-eta)*gpd(x,lambda,theta) + 10^(-10)
+#  return(r) 
+#}
+
+#' @export
+tau0 <- function(x, eta, lambda, theta){
+  r <- eta*(1*(x==0))/gpdMixture(x,eta,lambda,theta)
+  return(r)
+}
+
+#' @export
+tau1 <- function(x, eta, lambda, theta){
+  r <- (1 - eta)*gpd(x, lambda, theta)/gpdMixture(x,eta,lambda,theta)
+  return(r)
+}
+
+#' @export
+tau2 <- function(x, lambda, theta){
+  r <- lambda/(lambda + theta*x)
+  return(r)
+}
+
+#' @export
+tau3 <- function(x, lambda, theta){
+  r <- (theta*x)/(lambda + theta*x)
+  return(r)
+}
+
+#' @export
+f0 <- function(eta, lambda, theta, C){
+  v <- c(0:C)
+  pmf <- exp(log(lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)
+  r <- eta + (1 - eta)*sum(pmf) 
+  return(r)
+}
+
+#' @export
+f1 <- function(eta, lambda, theta, C){
+  v <- c(0:C)
+  pmf <- exp(log(lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)
+  r <- (1 - eta)*(1 - sum(pmf))
+  return(r)
+}
+#' @export
+f <- function (eta, lambda, theta, C, n){
+  r <- n*f1(eta, lambda, theta, C)/f0(eta, lambda, theta, C)
+  return(r)
+}
+
+#' @export
+f2 <- function(x, eta, lambda, theta, C){
+  K <- max(x)
+  v <- c((C + 1):K)
+  pmf <- exp(log(v*lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)
+  r <- (1 - eta)*(sum(pmf))
+  return(r)
+}
+
+#' @export
+f3 <- function (x, eta, lambda, theta, C, n){
+  r <- n*f2(x, eta, lambda, theta, C)/f0(eta, lambda, theta, C)
+  return(r)
+}
+
+#' @export
+f4 <- function(x, eta, lambda, theta, C){
+  K <- max(x)
+  v <- c((C + 1):K)
+  pmf <- exp(log(v*lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)*(lambda/(lambda + theta*v))
+  r <- (1 - eta)*(sum(pmf))
+  return(r)
+}
+
+#' @export
+f5 <- function (x, eta, lambda, theta, C, n){
+  r <- n*f4(x, eta, lambda, theta, C)/f0(eta, lambda, theta, C)
+  return(r)
+}
+
+#' @export
+f6 <- function(x, eta, lambda, theta, C){
+  K <- max(x)
+  v <- c((C + 1):K)
+  pmf <- exp(log(lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)*(lambda/(lambda + theta*v))
+  r <- (1 - eta)*sum(pmf)
+  return(r)
+}
+
+#' @export
+f7 <- function (x, eta, lambda, theta, C, n){
+  r <- n*f6(x, eta, lambda, theta, C)/f0(eta, lambda, theta, C)
+  return(r)
+}
+
+#' @export
+f8 <- function(x, eta, lambda, theta, C){
+  K <- max(x)
+  v <- c((C + 1):K)
+  pmf <- exp(log(v*lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)*((theta*v)/(lambda + theta*v))
+  r <- (1 - eta)*(sum(pmf))
+  return(r)
+}
+
+#' @export
+f9 <- function (x, eta, lambda, theta, C, n){
+  r <- n*f8(x, eta, lambda, theta, C)/f0(eta, lambda, theta, C)
+  return(r)
+}
+
+#' @export
+f10 <- function(x, eta, lambda, theta, C){
+  K <- max(x)
+  v <- c((C + 1):K)
+  pmf <- exp(log(lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)*((theta*v)/(lambda + theta*v))
+  r <- (1 - eta)*sum(pmf)
+  return(r)
+}
+
+#' @export
+f11 <- function (x, eta, lambda, theta, C, n){
+  r <- n*f10(x, eta, lambda, theta, C)/f0(eta, lambda, theta, C)
+  return(r)
+}
+
+## #' @export
+## f12 <- function(x, M){
+##   y <- rep(0, length(x))
+##   for(i in 1:length(x)){
+##     y[i] <- M/length(x[which(x==x[i])])
+##   }
+##   return(y)
+## }
+ 
+#' @export
+f13 <- function(x, eta, lambda, theta){
+  r <- rep(0, max(x))
+  for(i in 1:max(x)){
+    v <- c(0:(i - 1))
+    pmf <- exp(log(lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)
+    r[i] <- max(0,(1 - eta)*(1 - sum(pmf)))  
+  }
+  p1 <- seq(0,max(x),1)
+  p2 <- c(1, r)
+  p <- rbind(p1,p2)
+  return(p)
+}
+
+#' @export
+f14 <- function(data,n,C,CO,D)
+{
+  dataTabulate <- table(data[2,], data[1,])
+  null <- data[,which(data[2,]==0)]
+  nonNull <- data[,which(data[2,]==1)]
+  
+  fEstimate <- rbind(data[,order(data[1,])], f12(sort(data[1,]),n))
+  N0 <- fEstimate[,which(fEstimate[2,]==0)]
+  N1 <- fEstimate[,which(fEstimate[2,]==1)]
+
+  O1 <- as.numeric(N1[1,]%in%sort(nonNull[1,][which(nonNull[1,] < D)]))
+  O2 <- as.numeric(N1[1,]%in%sort(nonNull[1,][which(nonNull[1,] > (D - 1))]))
+  O3 <- sort(null[1,which(null[1,] < D)])
+  O4 <- sort(null[1,which(null[1,] <= CO)])
+  O5 <- sort(null[1,which(null[1,] > CO)])
+  
+  Q1 <- N0[3,which(N0[1,] <= C)]
+  Q2 <- N0[3,which(N0[1,] > C)]
+  Q3 <- N1[3,1:length(O1[which(O1==1)])]
+  Q4 <- N1[3,1:length(O2[which(O2==1)])]
+  Q5 <- N0[3,N0[1,]%in%O3]
+  Q6 <- N0[3,N0[1,]%in%O4]
+  Q7 <- N0[3,N0[1,]%in%O5]
+  
+  return(list(Q1,Q2,Q3,Q4,Q5,Q6,Q7))
+}
+
+#' @export
+lfdr <- function(pi,x,eta,lambda,theta,Q){
+  r <- pi*gpdMixture(x=x,eta=eta,lambda=lambda,theta=theta)*Q
+  return(r)
+}
+
+#' @export
+isEmpty <- function(x) {
+  return(length(x)!=0)
+}
+
+#' @export
+Dn <- function(lambda, theta, n){
+  r <- max(lambda/(exp(theta - 1) - theta), log(n)/(theta - 1 - log(theta)))
+  return(r)
+} 
+
+
+## #' @export
+## zipEMAlgorithm <- function (x)
+## {
+##   K <- max(x)
+##   M <- length(x)
+  
+##   zipEstimate <- matrix(0, nrow=3, ncol=K)
+  
+##   for(i in 1:K){
+##     C <- i
+##     count <- c(length(x[which(x==0)]), tabulate(x, nbins = C))
+##     n <- sum(count)
+##     etaEstimate <- max(0,mean((x==0)))
+##     lambdaEstimate <- max(0,mean(x)/(1 - mean((x==0))))
+##     epsilon <- 10^(-4)
+##     cf <- 10^(-10)
+##     hold.eta <- max(0,etaEstimate)
+##     hold.lambda <- max(cf,lambdaEstimate)
+##     hold.theta <- 0
+##     u1 <- count[1]*tau0(x=0, eta=hold.eta, lambda=hold.lambda, theta=hold.theta)
+##     u2 <- sum(count*tau1(x=c(0:C), eta=hold.eta, lambda=hold.lambda, theta=hold.theta))
+##     u3 <- f(eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     etaEstimate <- u1/(u1 + u2 + u3 + cf)
+##     v1 <- sum(c(0:C)*count*tau1(x=c(0:C), eta=hold.eta, lambda=hold.lambda, theta=hold.theta))
+##     v2 <- f3(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     lambdaEstimate <- (v1 + v2)/(u2 + u3 + cf)
+    
+##     while(((abs(hold.eta - etaEstimate)) > epsilon)||((abs(hold.lambda - lambdaEstimate)) > epsilon)){
+##       hold.eta <- max(0,etaEstimate)
+##       hold.lambda <- max(cf,lambdaEstimate)
+##       hold.theta <- 0
+##       u1 <- count[1]*tau0(x=0, eta=hold.eta, lambda=hold.lambda, theta=hold.theta)
+##       u2 <- sum(count*tau1(x=c(0:C), eta=hold.eta, lambda=hold.lambda, theta=hold.theta))
+##       u3 <- f(eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       etaEstimate <- u1/(u1 + u2 + u3 + cf)
+##       v1 <- sum(c(0:C)*count*tau1(x=c(0:C), eta=hold.eta, lambda=hold.lambda, theta=hold.theta))
+##       v2 <- f3(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       lambdaEstimate <- (v1 + v2)/(u2 + u3 + cf)
+##     }
+##     zipEstimate[1,i] <- etaEstimate
+##     zipEstimate[2,i] <- lambdaEstimate
+##     zipEstimate[3,i] <- 0
+##   }
+##   return(zipEstimate)
+## }
+
+## #' @export
+## gpEMAlgorithm <- function (x)
+## {
+##   K <- max(x)
+##   M <- length(x)
+  
+##   gpEstimate <- matrix(0, nrow=3, ncol=K)
+  
+##   for(i in 1:K){
+##     C <- i
+##     count <- c(length(x[which(x==0)]), tabulate(x, nbins = C))
+##     n <- sum(count)
+##     nz <- x[which(x!=0)]
+##     ex <- mean(nz[which(nz <= quantile(nz,0.5))])
+##     vx <- var(nz[which(nz <= quantile(nz,0.5))])
+##     phi <- sqrt(vx/(ex + 10^(-10)))
+##     thetaEstimate <- max(0, 1 - 1/phi)
+##     lambdaEstimate <- max(0, mean(x)/phi)
+##     epsilon <- 10^(-4)
+##     cf <- 10^(-10)
+##     hold.eta <- 0
+##     hold.lambda <- max(cf,lambdaEstimate)
+##     hold.theta <- max(0,thetaEstimate)
+##     u2 <- sum(count*tau1(x=c(0:C), eta=hold.eta, lambda=hold.lambda, theta=hold.theta))
+##     u3 <- f(eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     u4 <- sum(c(0:C)*count*tau1(x=c(0:C), eta=hold.eta, lambda=hold.lambda, theta=hold.theta))
+##     u5 <- f3(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     A <- u4 + u5
+##     u6 <- sum(c(0, seq(0,C - 1,1))*count*tau2(x=c(0:C), lambda=hold.lambda, theta=hold.theta))
+##     u7 <- f5(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     u8 <- f7(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     B <- u2 + u3 + u6 + u7 - u8
+##     lambdaEstimate <- (B + cf)/(u2 + u3 + cf)
+##     v1 <- sum(c(0, seq(0,C - 1,1))*count*tau3(x=c(0:C), lambda=hold.lambda, theta=hold.theta))
+##     v2 <- f9(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     v3 <- f11(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     D <- v1 + v2 - v3
+##     thetaEstimate <- (D + cf)/(A + cf)
+    
+##     while(((abs(hold.lambda-lambdaEstimate))>epsilon)||((abs(hold.theta-thetaEstimate))>epsilon)){
+##       hold.eta <- 0
+##       hold.lambda <- max(cf,lambdaEstimate)
+##       hold.theta <- max(0,thetaEstimate)
+##       u2 <- sum(count*tau1(x=c(0:C), eta=hold.eta, lambda=hold.lambda, theta=hold.theta))
+##       u3 <- f(eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       u4 <- sum(c(0:C)*count*tau1(x=c(0:C), eta=hold.eta, lambda=hold.lambda, theta=hold.theta))
+##       u5 <- f3(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       A <- u4 + u5
+##       u6 <- sum(c(0, seq(0,C - 1,1))*count*tau2(x=c(0:C), lambda=hold.lambda, theta=hold.theta))
+##       u7 <- f5(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       u8 <- f7(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       B <- u2 + u3 + u6 + u7 - u8
+##       lambdaEstimate <- (B + cf)/(u2 + u3 + cf)
+##       v1 <- sum(c(0, seq(0,C - 1,1))*count*tau3(x=c(0:C), lambda=hold.lambda, theta=hold.theta))
+##       v2 <- f9(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       v3 <- f11(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       D <- v1 + v2 - v3
+##       thetaEstimate <- (D + cf)/(A + cf)
+##     }
+##     gpEstimate[1,i] <- 0
+##     gpEstimate[2,i] <- lambdaEstimate
+##     gpEstimate[3,i] <- thetaEstimate
+##   }
+##   return(gpEstimate)
+## }
+
+## #' @export
+## pEMAlgorithm <- function (x)
+## {
+##   K <- max(x)
+##   M <- length(x)
+  
+##   pEstimate <- matrix(0, nrow=3, ncol=K)
+  
+##   for(i in 1:K){
+##     C <- i
+##     count <- c(length(x[which(x==0)]), tabulate(x, nbins = C))
+##     n <- sum(count)
+##     lambdaEstimate <- max(0, mean(x[which(x!=0)]))
+##     epsilon <- 10^(-4)
+##     cf <- 10^(-10)
+##     hold.eta <- 0
+##     hold.lambda <- max(cf, lambdaEstimate)
+##     hold.theta <- 0
+##     A <- sum(c(0:C)*count) + f3(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     B <- n + f(eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##     lambdaEstimate <- A/(B + cf)
+    
+##     while((abs(hold.lambda - lambdaEstimate)) > epsilon){
+##       hold.eta <- 0
+##       hold.lambda <- max(cf, lambdaEstimate)
+##       hold.theta <- 0
+##       A <- sum(c(0:C)*count) + f3(x=x, eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       B <- n + f(eta=hold.eta, lambda=hold.lambda, theta=hold.theta, C=C, n=n)
+##       lambdaEstimate <- A/(B + cf)
+##     }
+##     pEstimate[1,i] <- 0
+##     pEstimate[2,i] <- lambdaEstimate
+##     pEstimate[3,i] <- 0
+##   }
+##   return(pEstimate)
+## }
+
+#' @export
+BH <- function(FDRpvalue, FDRLevel)
+{   
+  lengthPval <- length(FDRpvalue)
+  pvalueIndex <- cbind(FDRpvalue, seq(1:lengthPval))
+  pvalueIndexOrd <- pvalueIndex[order(pvalueIndex[,1]),]
+  
+  BHstepups <- seq(1:lengthPval)*(FDRLevel/lengthPval)
+  condition <- pvalueIndexOrd[,1] <= BHstepups
+  scondition <- sum(condition)
+  
+  if (scondition == 0) {   
+    rejAndThreshold <- list(matrix(numeric(0), ncol=2,nrow=0),0)
+    bh <- 0
+  }  else   {  r <- max(which(condition))        
+  if (r==1) {
+    BHrej = as.matrix(t(pvalueIndexOrd[1:r,]))  
+  } else {
+    BHrej <- pvalueIndexOrd[1:r,]
+  }
+  rejAndThreshold <- list(BHrej,BHstepups[r])
+  bh <- BHrej[,2]
+  }
+  return(bh)
+}
+
+#' @export
+ModifiedBH <- function(FDRpvalue, FDRLevel, M, piZero, frequency)
+{   
+  lengthPval <- length(FDRpvalue)
+  pvalueIndex <- cbind(FDRpvalue, seq(1:lengthPval))
+  pvalueIndexOrd <- pvalueIndex[order(pvalueIndex[,1]),]
+  
+  atleast <- numeric()
+  for(i in 2:length(frequency)){
+    atleast[1] <- M
+    atleast[i] <- M - sum(frequency[1:(i - 1)])
+  }
+  
+  BHstepups <- atleast*(FDRLevel/(M*piZero))
+  condition <- pvalueIndexOrd[,1] <= BHstepups
+  scondition <- sum(condition)
+  
+  if (scondition == 0) {   
+    rejAndThreshold <- list(matrix(numeric(0), ncol=2,nrow=0),0)
+    bh <- 0
+  }  else   {  r <- max(which(condition))        
+  if (r==1) {
+    BHrej = as.matrix(t(pvalueIndexOrd[1:r,]))  
+  } else {
+    BHrej <- pvalueIndexOrd[1:r,]
+  }
+  rejAndThreshold <- list(BHrej,BHstepups[r])
+  bh <- BHrej[,2]
+  }
+  return(bh)
+}
+
+#' @export
+BHFDR <- function(data, eta, lambda, theta, FDRLevel)
+{
+  dataTabulate <- table(data[2,], data[1,])
+  null <- data[,which(data[2,]==0)]
+  nonNull <- data[,which(data[2,]==1)]
+  
+  x <- c(null[1,],nonNull[1,])
+  bh1 <- f13(x, eta,lambda,theta)
+  bh2 <- bh1[,bh1[1,]%in%sort(unique(x))]
+  bh3 <- rbind(bh2,dataTabulate)
+  bh4 <- sort(BH(FDRpvalue = bh3[2,], FDRLevel = FDRLevel))
+  bh5 <- as.numeric(names(bh4))
+  bh6 <- bh3[,bh3[1,]%in%bh5]
+  V <- sum(bh6[3,])
+  RV <- sum(bh6[4,])
+  R <- sum(bh6[3,]) + sum(bh6[4,])
+  FDR <- V/R
+  TPR <- RV/length(nonNull[1,])
+  result <- c(V,RV,R,FDR,TPR)
+  return(result)
+}
+
+#' @export
+ModifiedBHFDR <- function(data, eta, lambda, theta, FDRLevel, M, piZero, frequency)
+{
+  dataTabulate <- table(data[2,], data[1,])
+  null <- data[,which(data[2,]==0)]
+  nonNull <- data[,which(data[2,]==1)]
+  
+  x <- c(null[1,],nonNull[1,])
+  bh1 <- f13(x, eta,lambda,theta)
+  bh2 <- bh1[,bh1[1,]%in%sort(unique(x))]
+  bh3 <- rbind(bh2,dataTabulate)
+  bh4 <- sort(ModifiedBH(FDRpvalue=bh3[2,], FDRLevel=FDRLevel, M=M, piZero=piZero, frequency=frequency))
+  bh5 <- as.numeric(names(bh4))
+  bh6 <- bh3[,bh3[1,]%in%bh5]
+  V <- sum(bh6[3,])
+  RV <- sum(bh6[4,])
+  R <- sum(bh6[3,]) + sum(bh6[4,])
+  FDR <- V/R
+  TPR <- RV/length(nonNull[1,])
+  result <- c(V,RV,R,FDR,TPR)
+  return(as.vector(result))
+}
+
+#' @export
+RealMBHFDR <- function(x, eta, lambda, theta, FDRLevel, M, piZero, frequency){
+  count <- c(length(x[which(x==0)]), tabulate(x, nbins = max(x)))
+  bh1 <- f13(x, eta,lambda,theta)
+  bh2 <- bh1[,bh1[1,]%in%sort(unique(x))]
+  bh3 <- rbind(bh2,count[which(count > 0)])
+  bh4 <- sort(ModifiedBH(FDRpvalue=bh3[2,], FDRLevel=FDRLevel, M=length(x), piZero=piZero, frequency=count[which(count>0)]))
+  bh5 <- count[bh4]
+  R <- sum(bh5)
+  return(R)
+}
+
+#' @export
+generateZigp <-  function(n, mu = stop("no mu arg"), phi = stop("no phi arg"), omega = stop("no omega arg"))
+{
+  # check if parameters are valid
+  if(omega < 0) {return("omega has to be in [0,1]!")}
+  if(omega > 1) {return("omega has to be in [0,1]!")}
+  
+  # inversion method
+  x <- double(n)
+  u <- runif(n, 0, 1)
+  upper <- max(u)
+  s <- double(1000)
+  #P(X=0)
+  p <- omega + (1-omega) * exp(-mu/phi)
+  s[1] <- p
+  if (upper > 0) {
+    recursive <- FALSE
+    i <- 1
+    while (s[i] < upper) {
+      #P(X=x)
+      if (recursive==FALSE) {
+        p <- (1-omega)*mu*(mu+(phi-1)*i)^(i-1)/exp(lgamma(i+1))*
+          phi^(-i)*exp(-1/phi*(mu+(phi-1)*i))}
+      if (p==Inf) { 
+        recursive <- TRUE 
+        log.p.alt <- log( (1-omega)*mu*(mu+(phi-1)*(i-1))^(i-2)/exp(lgamma(i-1+1))*
+                            phi^(-(i-1))*exp(-1/phi*(mu+(phi-1)*(i-1))))
+      }
+      if (recursive==TRUE) {
+        log.p <- log( (mu+(i-1)*(phi-1))/(phi*i)*
+                        (1+(phi-1)/(mu+(i-1)*(phi-1)))^(i-1)*
+                        exp(1/phi-1) ) + log.p.alt
+        log.p.alt <- log.p
+        p <- exp(log.p)
+      }
+      if (ceiling(i/1000)==floor(i/1000)) {
+        temp <- double(1000)
+        s <- c(s,temp)
+      }
+      s[i+1] <- s[i] + p
+      i <- i+1
+    }
+  }
+  for (j in 1:length(u)) {
+    i <- 1
+    while (u[j] > s[i]) {   
+      i <- i+1
+    }
+    x[j] <- i-1
+  }
+  return(x)
+}
+
+
+###########################################################################################
+###############################      DATA GENERATION     ##################################
+###########################################################################################
+#' @export
+zigpSimulation <- function(n,eta,lambda, theta) {
+  r <- generateZigp(n=n,mu=lambda/(1 - theta), phi=1/(1 - theta), omega=eta)
+  return(r)
+}
+
+#' @export
+mixture <- function(n,C,D,f1binomial,eta,lambda,theta,pi,seed){
+  set.seed(seed)
+  r <- c()
+  v <- c()
+  counter <- 0
+  while(length(r) < n) {
+    u <- runif(1)
+    if(u >= pi) {
+      s <- C + 1 + D + rbinom(n=1,size=250,prob=0.20)*f1binomial + rgeom(n=1,prob=0.08)*(1-f1binomial) + zigpSimulation(n=1,eta=eta, lambda=lambda,theta=theta)
+      if(s > C){
+        r <- c(r, s)
+        v <- c(v, as.numeric(u >= pi))
+      }
+      else{
+        r <- c(r)
+      }
+    } else if(u < pi) {
+      r <- c(r,zigpSimulation(n=1,eta=eta, lambda=lambda,theta=theta))
+      v <- c(v, as.numeric(u >= pi))
+    }
+    counter <- counter + 1
+    l <- rbind(r,v)
+  }
+  return(l)
+}
+
+
+
+###########################################################################################
+###########################      NEGATIVE LOG LIKELIHOOD       ############################
+###########################################################################################
+#' @export
+negLogLh <- function(x, eta,lambda, theta,C){
+  count <- c(length(x[which(x==0)]), tabulate(x, nbins = max(x)))
+  v <- c(1:C)
+  f0 <- count[1]*(-log(eta + (1-eta)*exp(-lambda)))
+  f1 <- count[2:(C+1)]*(-log((1 - eta)*exp(log(lambda) + (v - 1)*log(lambda + theta*v) - lfactorial(v) - lambda - theta*v)))
+  r <- f0 + sum(f1)
+  return(r)
+}
+
+
+###########################################################################################
+###############################    FDR CALCULATION      ###################################
+###########################################################################################
+#' @export
+FDRCalculation <- function(n,C,D,f1binomial,eta,lambda,theta,pi0,iterations,FDRLevel)
+{
+  E <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,4,iterations))
+  B <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,5,iterations))
+  H <- array(NA, c(2,3,length(eta),length(lambda),length(theta),length(pi0),2,4,iterations))
+  W <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,2,iterations))
+  CO <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,iterations))
+  V <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,2,iterations))
+  RV <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,2,iterations))
+  FD <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,2,iterations))
+  TD <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,2,iterations))
+  R <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,2,iterations))
+  FDR <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,2,iterations))
+  TPR <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,2,iterations))
+  OBH <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,5,iterations))
+  MBH <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,5,iterations))
+  AD <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,iterations))
+  S <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,8,11))
+  Z <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,8,9))
+  
+  
+  for (e in 1:length(eta)){
+    for(l in 1:length(lambda)){
+      for(t in 1:length(theta)){
+        for(p in 1:length(pi0)){
+          for(k in 1:iterations){
+            seed <- 889191 + k
+            data <- mixture(n=n,C=C,D=D,f1binomial=f1binomial,eta=eta[e],lambda=lambda[l],theta=theta[t],pi=pi0[p],seed=seed)
+            
+            dataTabulate <- table(data[2,], data[1,])
+            null <- data[,which(data[2,]==0)]
+            nonNull <- data[,which(data[2,]==1)]
+            
+            x <- c(null[1,],nonNull[1,])
+            M <- n
+            cf <- 10^(-10)
+            count <- c(length(x[which(x==0)]), tabulate(x, nbins = max(x)))
+            names(count) <- c(0:max(x))
+            
+            estimate <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),4,3,max(x)))
+            estimate[e,l,t,p,1,,] <- zigpEMAlgorithm(x)
+            estimate[e,l,t,p,2,,] <- zipEMAlgorithm(x)
+            estimate[e,l,t,p,3,,] <- gpEMAlgorithm(x)
+            estimate[e,l,t,p,4,,] <- pEMAlgorithm(x)
+            
+            cut <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),2,4,max(x)))
+            pi <- array(NA, c(length(eta),length(lambda),length(theta),length(pi0),4,max(x)))
+            psi <- matrix(NA, nrow=2, ncol=max(x))
+            
+            for(model in 1:4){
+              for(i in 1:max(x)){
+                pi[e,l,t,p,model,i] <- min(1, sum(count[1:(i+1)])/(M*f0(estimate[e,l,t,p,model,1,i],estimate[e,l,t,p,model,2,i],estimate[e,l,t,p,model,3,i],C=i)))
+                psi[1,i] <- length(x[which(x<=i)])*(-log(sum(count[1:(i+1)] + cf)/M)) + length(x[which(x>i)])*(-log(1 + cf - sum(count[1:(i+1)] + cf)/M))
+                psi[2,i] <- log(M)*length(x[which(x > i)]) - sum(count[(i + 2):(max(x) + 1)]*(log(count[(i + 2):(max(x) + 1)] + cf)))
+                psi[2,max(x)] <- log(M)*length(x[which(x > i)]) - sum(count[max(x)]*(log(count[max(x)] + cf)))
+                
+                cut[e,l,t,p,1,model,i] <- psi[2,i] + negLogLh(x=x,estimate[e,l,t,p,model,1,i],estimate[e,l,t,p,model,2,i],estimate[e,l,t,p,model,3,i],C=i)
+                cut[e,l,t,p,2,model,i] <- psi[1,i] + negLogLh(x=x,estimate[e,l,t,p,model,1,i],estimate[e,l,t,p,model,2,i],estimate[e,l,t,p,model,3,i],C=i)
+              }
+              
+              CO[e,l,t,p,1,model,k] <- min(which(diff(sign(diff(cut[e,l,t,p,1,model,])))>0)+2, which.min(cut[e,l,t,p,1,model,]))
+              CO[e,l,t,p,2,model,k] <- min(which(diff(sign(diff(cut[e,l,t,p,2,model,])))>0)+2, which.min(cut[e,l,t,p,2,model,]))
+            }
+            
+            for(method in 1:2){
+              for(model in c(1,3)){
+                AD[e,l,t,p,method,model,k] <- ceiling(max((CO[e,l,t,p,method,model,k] + 1),Dn(estimate[e,l,t,p,model,2,CO[e,l,t,p,method,model,k]],estimate[e,l,t,p,model,3,CO[e,l,t,p,method,model,k]],n) ))
+              }
+              for(model in c(2,4)){
+                AD[e,l,t,p,method,model,k] <- ceiling(max((CO[e,l,t,p,method,model,k] + 1),estimate[e,l,t,p,model,2,CO[e,l,t,p,method,model,k]], log(n)))
+              }
+            }
+            
+            for(method in 1:2){
+              for(model in 1:4){
+                H[1,1,e,l,t,p,method,model,k] <- length(null[,which(null[1,] <= C)][1,])
+                H[1,2,e,l,t,p,method,model,k] <- length(null[,which(null[1,] < AD[e,l,t,p,method,model,k])][1,]) - H[1,1,e,l,t,p,method,model,k]
+                H[1,3,e,l,t,p,method,model,k] <- length(null[1,]) - H[1,1,e,l,t,p,method,model,k] - H[1,2,e,l,t,p,method,model,k]
+                H[2,1,e,l,t,p,method,model,k] <- length(nonNull[1,which(nonNull[1,] <= C)])
+                H[2,2,e,l,t,p,method,model,k] <- length(nonNull[1,which(nonNull[1,] < AD[e,l,t,p,method,model,k])]) - H[2,1,e,l,t,p,method,model,k]
+                H[2,3,e,l,t,p,method,model,k] <- length(nonNull[1,]) - H[2,1,e,l,t,p,method,model,k] - H[2,2,e,l,t,p,method,model,k]
+            
+                E[e,l,t,p,method,model,1,k] <- estimate[e,l,t,p,model,1,CO[e,l,t,p,method,model,k]]
+                E[e,l,t,p,method,model,2,k] <- estimate[e,l,t,p,model,2,CO[e,l,t,p,method,model,k]]
+                E[e,l,t,p,method,model,3,k] <- estimate[e,l,t,p,model,3,CO[e,l,t,p,method,model,k]]
+                E[e,l,t,p,method,model,4,k] <- pi[e,l,t,p,model,CO[e,l,t,p,method,model,k]]
+                
+                if (model==1){
+                  B[e,l,t,p,method,model,1,k] <- E[e,l,t,p,method,model,1,k] - eta[e]
+                  B[e,l,t,p,method,model,2,k] <- E[e,l,t,p,method,model,2,k] - lambda[l]
+                  B[e,l,t,p,method,model,3,k] <- E[e,l,t,p,method,model,3,k] - theta[t]
+                  B[e,l,t,p,method,model,4,k] <- E[e,l,t,p,method,model,4,k] - pi0[p]
+                  B[e,l,t,p,method,model,5,k] <- CO[e,l,t,p,method,model,k] - C
+                } else if (model==2){
+                  B[e,l,t,p,method,model,1,k] <- E[e,l,t,p,method,model,1,k] - eta[e]
+                  B[e,l,t,p,method,model,2,k] <- E[e,l,t,p,method,model,2,k] - lambda[l]
+                  B[e,l,t,p,method,model,3,k] <- NA
+                  B[e,l,t,p,method,model,4,k] <- E[e,l,t,p,method,model,4,k] - pi0[p]
+                  B[e,l,t,p,method,model,5,k] <- CO[e,l,t,p,method,model,k] - C
+                } else if (model==3){
+                  B[e,l,t,p,method,model,1,k] <- NA
+                  B[e,l,t,p,method,model,2,k] <- E[e,l,t,p,method,model,2,k] - lambda[l]
+                  B[e,l,t,p,method,model,3,k] <- E[e,l,t,p,method,model,3,k] - theta[t]
+                  B[e,l,t,p,method,model,4,k] <- E[e,l,t,p,method,model,4,k] - pi0[p]
+                  B[e,l,t,p,method,model,5,k] <- CO[e,l,t,p,method,model,k] - C
+                } else if (model==4){
+                  B[e,l,t,p,method,model,1,k] <- NA
+                  B[e,l,t,p,method,model,2,k] <- E[e,l,t,p,method,model,2,k] - lambda[l]
+                  B[e,l,t,p,method,model,3,k] <- NA
+                  B[e,l,t,p,method,model,4,k] <- E[e,l,t,p,method,model,4,k] - pi0[p]
+                  B[e,l,t,p,method,model,5,k] <- CO[e,l,t,p,method,model,k] - C
+                }
+              }
+            }
+            
+            for(method in 1:2){
+              for(model in 1:4){
+                P1 <- lfdr(pi=E[e,l,t,p,method,model,4,k],x=sort(null[1,which(null[1,] <= C)]),eta=E[e,l,t,p,method,model,1,k],lambda=E[e,l,t,p,method,model,2,k],theta=E[e,l,t,p,method,model,3,k],Q=f14(data=data,n=n,C=C,CO=CO[e,l,t,p,method,model,k],D=AD[e,l,t,p,method,model,k])[[1]])
+                P2 <- lfdr(pi=E[e,l,t,p,method,model,4,k],x=sort(null[1,which(null[1,] > C)]),eta=E[e,l,t,p,method,model,1,k],lambda=E[e,l,t,p,method,model,2,k],theta=E[e,l,t,p,method,model,3,k],Q=f14(data=data,n=n,C=C,CO=CO[e,l,t,p,method,model,k],D=AD[e,l,t,p,method,model,k])[[2]])
+                P3 <- lfdr(pi=E[e,l,t,p,method,model,4,k],x=sort(nonNull[1,][which(nonNull[1,] < AD[e,l,t,p,method,model,k])]),eta=E[e,l,t,p,method,model,1,k],lambda=E[e,l,t,p,method,model,2,k],theta=E[e,l,t,p,method,model,3,k],Q=f14(data=data,n=n,C=C,CO=CO[e,l,t,p,method,model,k],D=AD[e,l,t,p,method,model,k])[[3]])
+                P4 <- lfdr(pi=E[e,l,t,p,method,model,4,k],x=sort(nonNull[1,][which(nonNull[1,] > (AD[e,l,t,p,method,model,k] - 1))]),eta=E[e,l,t,p,method,model,1,k],lambda=E[e,l,t,p,method,model,2,k],theta=E[e,l,t,p,method,model,3,k],Q=f14(data=data,n=n,C=C,CO=CO[e,l,t,p,method,model,k],D=AD[e,l,t,p,method,model,k])[[4]])
+                
+                U1 <- lfdr(pi=E[e,l,t,p,method,model,4,k],x=sort(null[1,which(null[1,] < AD[e,l,t,p,method,model,k])]),eta=E[e,l,t,p,method,model,1,k],lambda=E[e,l,t,p,method,model,2,k],theta=E[e,l,t,p,method,model,3,k],Q=f14(data=data,n=n,C=C,CO=CO[e,l,t,p,method,model,k],D=AD[e,l,t,p,method,model,k])[[5]])
+                U2 <- lfdr(pi=E[e,l,t,p,method,model,4,k],x=sort(null[1,which(null[1,] <= CO[e,l,t,p,method,model,k])]),eta=E[e,l,t,p,method,model,1,k],lambda=E[e,l,t,p,method,model,2,k],theta=E[e,l,t,p,method,model,3,k],Q=f14(data=data,n=n,C=C,CO=CO[e,l,t,p,method,model,k],D=AD[e,l,t,p,method,model,k])[[6]])
+                U3 <- lfdr(pi=E[e,l,t,p,method,model,4,k],x=sort(null[1,which(null[1,] > CO[e,l,t,p,method,model,k])]),eta=E[e,l,t,p,method,model,1,k],lambda=E[e,l,t,p,method,model,2,k],theta=E[e,l,t,p,method,model,3,k],Q=f14(data=data,n=n,C=C,CO=CO[e,l,t,p,method,model,k],D=AD[e,l,t,p,method,model,k])[[7]])
+                
+                BH1 <- BHFDR(data,estimate[e,l,t,p,model,1,CO[e,l,t,p,method,model,k]],estimate[e,l,t,p,model,2,CO[e,l,t,p,method,model,k]],estimate[e,l,t,p,model,3,CO[e,l,t,p,method,model,k]], FDRLevel = FDRLevel)
+                BH2 <- ModifiedBHFDR(data,estimate[e,l,t,p,model,1,CO[e,l,t,p,method,model,k]],estimate[e,l,t,p,model,2,CO[e,l,t,p,method,model,k]],estimate[e,l,t,p,model,3,CO[e,l,t,p,method,model,k]], FDRLevel = FDRLevel, M=n, piZero=pi[e,l,t,p,model,CO[e,l,t,p,method,model,k]], frequency=count[which(count > 0)])
+                
+                V[e,l,t,p,method,model,1,k] <- sum(P1[!is.na(P1)] < FDRLevel)
+                V[e,l,t,p,method,model,2,k] <- sum(P2[!is.na(P2)] < FDRLevel)
+                
+                W[e,l,t,p,method,model,1,k] <- max(0, sum(U3[!is.na(U3)] < FDRLevel))
+                W[e,l,t,p,method,model,2,k] <- max(0, sum(U1[!is.na(U1)] < FDRLevel) - sum(U2[!is.na(U2)] < FDRLevel))
+                
+                RV[e,l,t,p,method,model,1,k] <- sum(P3[!is.na(P3)] < FDRLevel)
+                RV[e,l,t,p,method,model,2,k] <- sum(P4[!is.na(P4)] < FDRLevel)
+                
+                FD[e,l,t,p,method,model,1,k] <- W[e,l,t,p,method,model,2,k] + H[1,3,e,l,t,p,method,model,k]                                  
+                FD[e,l,t,p,method,model,2,k] <- W[e,l,t,p,method,model,1,k]                                                                  
+                
+                TD[e,l,t,p,method,model,1,k] <- RV[e,l,t,p,method,model,1,k] + H[2,3,e,l,t,p,method,model,k]                                 
+                TD[e,l,t,p,method,model,2,k] <- RV[e,l,t,p,method,model,1,k] + RV[e,l,t,p,method,model,2,k]                                  
+                
+                R[e,l,t,p,method,model,1,k] <- TD[e,l,t,p,method,model,1,k] + FD[e,l,t,p,method,model,1,k]                                   
+                R[e,l,t,p,method,model,2,k] <- TD[e,l,t,p,method,model,2,k] + FD[e,l,t,p,method,model,2,k]                                   
+                                                                                
+                if(R[e,l,t,p,method,model,1,k]==0){
+                  FDR[e,l,t,p,method,model,1,k] <- 0
+                } else{
+                  FDR[e,l,t,p,method,model,1,k] <- FD[e,l,t,p,method,model,1,k]/R[e,l,t,p,method,model,1,k]                                      
+                }
+                if(R[e,l,t,p,method,model,2,k]==0){
+                  FDR[e,l,t,p,method,model,2,k] <- 0
+                } else{
+                  FDR[e,l,t,p,method,model,2,k] <- FD[e,l,t,p,method,model,2,k]/R[e,l,t,p,method,model,2,k]                                    
+                }
+                
+                TPR[e,l,t,p,method,model,1,k] <- TD[e,l,t,p,method,model,1,k]/(H[2,1,e,l,t,p,method,model,k] + H[2,2,e,l,t,p,method,model,k] + H[2,3,e,l,t,p,method,model,k])   #modified
+                TPR[e,l,t,p,method,model,2,k] <- TD[e,l,t,p,method,model,2,k]/(H[2,1,e,l,t,p,method,model,k] + H[2,2,e,l,t,p,method,model,k] + H[2,3,e,l,t,p,method,model,k])   #original
+                
+                MBH[e,l,t,p,method,model,1,k] <- BH2[1]
+                MBH[e,l,t,p,method,model,2,k] <- BH2[2]
+                MBH[e,l,t,p,method,model,3,k] <- BH2[3]
+                MBH[e,l,t,p,method,model,4,k] <- BH2[4]
+                MBH[e,l,t,p,method,model,5,k] <- BH2[5]
+              }
+            }
+            
+            for(method in 1:2){
+              for(model in 1:4){
+                Z[e,l,t,p,method,(2*model - 1),1] <- mean(R[e,l,t,p,method,model,1,1:iterations],na.rm=T)    #R super modified
+                Z[e,l,t,p,method,(2*model - 1),2] <- mean(FDR[e,l,t,p,method,model,1,1:iterations], na.rm=T) #FDR super modified
+                Z[e,l,t,p,method,(2*model - 1),3] <- mean(TPR[e,l,t,p,method,model,1,1:iterations], na.rm=T) #TPR
+                Z[e,l,t,p,method,(2*model - 1),4] <- mean(R[e,l,t,p,method,model,2,1:iterations],na.rm=T)    #R super original
+                Z[e,l,t,p,method,(2*model - 1),5] <- mean(FDR[e,l,t,p,method,model,2,1:iterations], na.rm=T) #FDR super original
+                Z[e,l,t,p,method,(2*model - 1),6] <- mean(TPR[e,l,t,p,method,model,2,1:iterations], na.rm=T) #TPR
+                Z[e,l,t,p,method,(2*model - 1),7] <- mean(MBH[e,l,t,p,method,model,3,1:iterations], na.rm=T) #RMBH
+                Z[e,l,t,p,method,(2*model - 1),8] <- mean(MBH[e,l,t,p,method,model,4,1:iterations], na.rm=T) #FDRMBH
+                Z[e,l,t,p,method,(2*model - 1),9] <- mean(MBH[e,l,t,p,method,model,5,1:iterations], na.rm=T) #TPRMBH
+                
+                Z[e,l,t,p,method,(2*model),1] <- sd(R[e,l,t,p,method,model,1,1:iterations], na.rm=T)   #R
+                Z[e,l,t,p,method,(2*model),2] <- sd(FDR[e,l,t,p,method,model,1,1:iterations], na.rm=T) #FDR
+                Z[e,l,t,p,method,(2*model),3] <- sd(TPR[e,l,t,p,method,model,1,1:iterations], na.rm=T) #TPR
+                Z[e,l,t,p,method,(2*model),4] <- sd(R[e,l,t,p,method,model,2,1:iterations], na.rm=T)   #R
+                Z[e,l,t,p,method,(2*model),5] <- sd(FDR[e,l,t,p,method,model,2,1:iterations], na.rm=T) #FDR
+                Z[e,l,t,p,method,(2*model),6] <- sd(TPR[e,l,t,p,method,model,2,1:iterations], na.rm=T) #TPR
+                Z[e,l,t,p,method,(2*model),7] <- sd(MBH[e,l,t,p,method,model,3,1:iterations], na.rm=T) #RMBH
+                Z[e,l,t,p,method,(2*model),8] <- sd(MBH[e,l,t,p,method,model,4,1:iterations], na.rm=T) #FDRMBH
+                Z[e,l,t,p,method,(2*model),9] <- sd(MBH[e,l,t,p,method,model,5,1:iterations], na.rm=T) #TPRMBH
+              }  
+            }
+            
+            for(method in 1:2){
+              for(model in 1:4){
+                S[e,l,t,p,method,(2*model - 1),1] <- mean(E[e,l,t,p,method,model,1,1:iterations], na.rm=T) #eta
+                S[e,l,t,p,method,(2*model - 1),2] <- mean(E[e,l,t,p,method,model,2,1:iterations], na.rm=T) #lambda
+                S[e,l,t,p,method,(2*model - 1),3] <- mean(E[e,l,t,p,method,model,3,1:iterations], na.rm=T) #theta
+                S[e,l,t,p,method,(2*model - 1),4] <- mean(E[e,l,t,p,method,model,4,1:iterations], na.rm=T) #pi
+                S[e,l,t,p,method,(2*model - 1),5] <- mean(CO[e,l,t,p,method,model,1:iterations], na.rm=T)  #C
+                S[e,l,t,p,method,(2*model - 1),6] <- mean(AD[e,l,t,p,method,model,1:iterations])           #D
+                
+                S[e,l,t,p,method,(2*model - 1),7] <- mean(B[e,l,t,p,method,model,1,1:iterations], na.rm=T)    #eta
+                S[e,l,t,p,method,(2*model - 1),8] <- mean(B[e,l,t,p,method,model,2,1:iterations], na.rm=T)    #lambda
+                S[e,l,t,p,method,(2*model - 1),9] <- mean(B[e,l,t,p,method,model,3,1:iterations], na.rm=T)    #theta
+                S[e,l,t,p,method,(2*model - 1),10] <- mean(B[e,l,t,p,method,model,4,1:iterations], na.rm=T)   #pi
+                S[e,l,t,p,method,(2*model - 1),11] <- mean(B[e,l,t,p,method,model,5,1:iterations], na.rm=T)   #C
+                
+                S[e,l,t,p,method,(2*model),1] <- sd(E[e,l,t,p,method,model,1,1:iterations], na.rm=T) #eta
+                S[e,l,t,p,method,(2*model),2] <- sd(E[e,l,t,p,method,model,2,1:iterations], na.rm=T) #lambda
+                S[e,l,t,p,method,(2*model),3] <- sd(E[e,l,t,p,method,model,3,1:iterations], na.rm=T) #theta
+                S[e,l,t,p,method,(2*model),4] <- sd(E[e,l,t,p,method,model,4,1:iterations], na.rm=T) #pi
+                S[e,l,t,p,method,(2*model),5] <- sd(CO[e,l,t,p,method,model,1:iterations], na.rm=T)  #C
+                S[e,l,t,p,method,(2*model),6] <- sd(AD[e,l,t,p,method,model,1:iterations])           #D
+                
+                S[e,l,t,p,method,(2*model),7] <- sd(B[e,l,t,p,method,model,1,1:iterations], na.rm=T)  #eta
+                S[e,l,t,p,method,(2*model),8] <- sd(B[e,l,t,p,method,model,2,1:iterations], na.rm=T)  #lambda
+                S[e,l,t,p,method,(2*model),9] <- sd(B[e,l,t,p,method,model,3,1:iterations], na.rm=T)  #theta
+                S[e,l,t,p,method,(2*model),10] <- sd(B[e,l,t,p,method,model,4,1:iterations], na.rm=T) #pi
+                S[e,l,t,p,method,(2*model),11] <- sd(B[e,l,t,p,method,model,5,1:iterations], na.rm=T) #C
+              }  
+            }
+          }
+        }  
+      }    
+    }    
+  }
+  
+  
+  library(xtable)
+  options(xtable.floating = FALSE)
+  options(xtable.timestamp = "")
+  
+  for (e in 1:length(eta)){
+    for(l in 1:length(lambda)){
+      for(t in 1:length(theta)){
+        for(p in 1:length(pi0)){
+          summary <- rbind(Z[e,l,t,p,1,,], Z[e,l,t,p,2,,])
+          bias <- rbind(S[e,l,t,p,1,,7:11], S[e,l,t,p,2,,7:11])
+          colnames(summary) <- c("R","FDR","TPR","R","FDR","TPR","R","FDR","TPR")
+          colnames(bias) <- c("eta","lambda","theta","pi","C")
+          print(c("Scenario",eta[e],lambda[l],theta[t],pi0[p]))
+          printSummary <- print(xtable(summary, digits=c(0,2,4,3,2,4,3,2,4,3)))
+          printBias <- print(xtable(bias, digits=c(0,4,4,4,4,2)))
+        }
+      }
+    }
+  }     
+}
+
+
+###########################################################################################
+#########################   REAL DATA FDR CALCULATION      ################################
+###########################################################################################
+#' @export
+RealDataFDR <- function(file, k, FDRLevel)
+{
+  
+  CO <- array(NA, c(2,4))
+  AD <- array(NA, c(2,4))
+  E <- array(NA, c(2,4,6))
+  R <- array(NA, c(2,4,2))
+  BH <- array(NA, c(2,4))
+  
+  protein <- read.delim(file, sep="", header=T)
+  x <- protein[,(k+1)][!is.na(protein[,(k+1)])]
+  M <- length(x)
+  cf <- 10^(-10)
+  count <- c(length(x[which(x==0)]), tabulate(x, nbins = max(x)))
+  names(count) <- c(0:max(x))
+  
+  estimate <- array(NA, c(4,3,max(x)))
+  estimate[1,,] <- zigpEMAlgorithm(x)
+  estimate[2,,] <- zipEMAlgorithm(x)
+  estimate[3,,] <- gpEMAlgorithm(x)
+  estimate[4,,] <- pEMAlgorithm(x)
+  
+  cut <- array(NA, c(2,4,max(x)))
+  pi <- array(NA, c(4,max(x)))
+  psi <- matrix(NA, nrow=2, ncol=max(x))
+  xi <- array(NA, c(4,max(x)))
+  
+  for(model in 1:4){
+    for(i in 1:max(x)){
+      pi[model,i] <- min(1, sum(count[1:(i+1)])/(M*f0(estimate[model,1,i],estimate[model,2,i],estimate[model,3,i],C=i)))
+      psi[1,i] <- length(x[which(x<=i)])*(-log(sum(count[1:(i+1)] + cf)/M)) + length(x[which(x>i)])*(-log(1 + cf - sum(count[1:(i+1)] + cf)/M))
+      psi[2,i] <- log(M)*length(x[which(x > i)]) - sum(count[(i + 2):(max(x) + 1)]*(log(count[(i + 2):(max(x) + 1)] + cf)))
+      psi[2,max(x)] <- log(M)*length(x[which(x > i)]) - sum(count[max(x)]*(log(count[max(x)] + cf)))
+      xi[model,i] <- length(x[which(x<=i)])*(-log(pi[model,i] + cf)) + length(x[which(x>i)])*(-log(1 + cf - pi[model,i]))
+      
+      cut[1,model,i] <- psi[2,i] + negLogLh(x=x,estimate[model,1,i],estimate[model,2,i],estimate[model,3,i],C=i)
+      cut[2,model,i] <- psi[1,i] + negLogLh(x=x,estimate[model,1,i],estimate[model,2,i],estimate[model,3,i],C=i)
+    }
+    
+    CO[1,model] <- min(which(diff(sign(diff(cut[1,model,])))>0)+2, which.min(cut[1,model,]))
+    CO[2,model] <- min(which(diff(sign(diff(cut[2,model,])))>0)+2, which.min(cut[2,model,]))
+  }
+  
+  for(method in 1:2){
+    for(model in c(1,3)){
+      AD[method,model] <- min(max(x),ceiling(max((CO[method,model] + 1),estimate[model,2,CO[method,model]]/(exp(estimate[model,3,CO[method,model]] - 1) - estimate[model,3,CO[method,model]]), log(length(x))/(estimate[model,3,CO[method,model]] - 1 - log(estimate[model,3,CO[method,model]])))))
+    }
+    for(model in c(2,4)){
+      AD[method,model] <- min(max(x),ceiling(max((CO[method,model] + 1),estimate[model,2,CO[method,model]], log(length(x)))))
+    }
+  }
+  
+  for(method in 1:2){
+    for(model in 1:4){
+      if (model==1){
+        E[method,model,1] <- estimate[model,1,CO[method,model]]
+        E[method,model,2] <- estimate[model,2,CO[method,model]]
+        E[method,model,3] <- estimate[model,3,CO[method,model]]
+      } else if (model==2){
+        E[method,model,1] <- estimate[model,1,CO[method,model]]
+        E[method,model,2] <- estimate[model,2,CO[method,model]]
+        E[method,model,3] <- NA
+      } else if (model==3){
+        E[method,model,1] <- NA
+        E[method,model,2] <- estimate[model,2,CO[method,model]]
+        E[method,model,3] <- estimate[model,3,CO[method,model]]
+      } else if (model==4){
+        E[method,model,1] <- NA
+        E[method,model,2] <- estimate[model,2,CO[method,model]]
+        E[method,model,3] <- NA
+      }
+      
+      E[method,model,4] <- pi[model,CO[method,model]]
+      E[method,model,5] <- CO[method,model]
+      E[method,model,6] <- AD[method,model]
+      LFDR <- pi[model,CO[method,model]]*gpdMixture(x=sort(x),estimate[model,1,CO[method,model]],estimate[model,2,CO[method,model]],estimate[model,3,CO[method,model]])*f12(sort(x),length(x))
+      U1 <- pi[model,CO[method,model]]*gpdMixture(x=sort(x[which(x < (AD[method,model]))]),estimate[model,1,CO[method,model]],estimate[model,2,CO[method,model]],estimate[model,3,CO[method,model]])*f12(sort(x[which(x < (AD[method,model]))]),length(x))
+      U2 <- pi[model,CO[method,model]]*gpdMixture(x=sort(x[which(x <= (CO[method,model]))]),estimate[model,1,CO[method,model]],estimate[model,2,CO[method,model]],estimate[model,3,CO[method,model]])*f12(sort(x[which(x <= (CO[method,model]))]),length(x))
+      R[method,model,1] <- sum(LFDR[!is.na(LFDR)] < FDRLevel)
+      R[method,model,2] <- sum(U1[!is.na(U1)] < FDRLevel) - sum(U2[!is.na(U2)] < FDRLevel) + length(x[which(x > (AD[method,model]-1))])
+      BH[method,model] <- RealMBHFDR(x,estimate[model,1,CO[method,model]],estimate[model,2,CO[method,model]],estimate[model,3,CO[method,model]], FDRLevel = FDRLevel, M=length(x), piZero=pi[model,CO[method,model]], frequency=count[which(count > 0)])
+    }
+  }
+  
+  Rejection <- cbind(R[,,1],R[,,2], BH)
+  EstimatesC1 <- rbind(E[1,1,],E[1,2,],E[1,3,],E[1,4,])
+  EstimatesC2 <- rbind(E[2,1,],E[2,2,],E[2,3,],E[2,4,])
+  
+  return(list(Rejection,EstimatesC1,EstimatesC2))
+}
+
+
+
