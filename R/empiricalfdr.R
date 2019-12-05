@@ -1,0 +1,80 @@
+#' empiricalfdr
+#'
+#' calculates the faslse discovery rate
+#' @param estimate matrix with rows containg the estimates of eta, lambda, and theta
+#' @param x   the count data in correct format
+#' @keywords cats
+#' @export
+#' @examples
+#' empiricalfdr(estimate,x)
+
+empiricalfdr<-function(estimate,x){
+    
+    M<-length(x)  
+    cut <- array(NA, max(x))
+    pi <- array(NA, max(x))
+    psi <- matrix(NA, nrow=2, ncol=max(x))
+    xi <- array(NA, max(x))
+    
+    for(i in 1:max(x)){
+        pi[i] <- min(1, sum(count[1:(i+1)])/(M*f0(estimate[1,i],estimate[2,i],estimate[3,i],C=i)))
+        psi[1,i] <- length(x[which(x<=i)])*(-log(sum(count[1:(i+1)] + cf)/M)) + length(x[which(x>i)])*(-log(1 + cf - sum(count[1:(i+1)] + cf)/M))
+        psi[2,i] <- log(M)*length(x[which(x > i)]) - sum(count[(i + 2):(max(x) + 1)]*(log(count[(i + 2):(max(x) + 1)] + cf)))
+        psi[2,max(x)] <- log(M)*length(x[which(x > i)]) - sum(count[max(x)]*(log(count[max(x)] + cf)))
+        xi[i] <- length(x[which(x<=i)])*(-log(pi[i] + cf)) + length(x[which(x>i)])*(-log(1 + cf - pi[i]))
+        cut[i] <- psi[2,i] + negLogLh(x=x,estimate[1,i],estimate[2,i],estimate[3,i],C=i)
+    }
+    
+    CO <- min(which(diff(sign(diff(cut)))>0)+2, which.min(cut))
+    if(class(estimate)== "zigpEstimate"){
+        AD <- min(max(x),ceiling(max((CO + 1),estimate[2,CO]/(exp(estimate[3,CO] - 1) - estimate[3,CO]), log(length(x))/(estimate[3,CO] - 1 - log(estimate[3,CO])))))
+        E<-rep(NA, 6)
+        E[1] <- estimate[1,CO]
+        E[2] <- estimate[2,CO]
+        E[3] <- estimate[3,CO]
+        E[4] <- pi[CO]
+        E[5] <- CO
+        E[6] <- AD
+    } else if (class(estimate)== "zipEstimate"){
+        AD <- min(max(x),ceiling(max((CO + 1),estimate[2,CO], log(length(x)))))
+        E<-rep(NA, 6)
+        E[1] <- estimate[1,CO]
+        E[2] <- estimate[2,CO]
+        E[3] <- NA
+        E[4] <- pi[CO]
+        E[5] <- CO
+        E[6] <- AD
+    }  else if (class(estimate)== "gpEstimate"){
+        AD <- min(max(x),ceiling(max((CO + 1),estimate[2,CO]/(exp(estimate[3,CO] - 1) - estimate[3,CO]), log(length(x))/(estimate[3,CO] - 1 - log(estimate[3,CO])))))
+        
+        E<-rep(NA, 6)
+        E[1] <- NA
+        E[2] <- estimate[2,CO]
+        E[3] <- estimate[3,CO]
+        E[4] <- pi[CO]
+        E[5] <- CO
+        E[6] <- AD
+    }else if (class(estimate)== "pEstimate"){
+        AD <- min(max(x),ceiling(max((CO + 1),estimate[2,CO], log(length(x)))))
+        
+        E<-rep(NA, 6)
+        E[1] <- NA
+        E[2] <- estimate[2,CO]
+        E[3] <- NA
+        E[4] <- pi[CO]
+        E[5] <- CO
+        E[6] <- AD
+    }
+    
+    LFDR <- pi[CO]*gpdMixture(x=sort(x),estimate[1,CO],estimate[2,CO],estimate[3,CO])*f12(sort(x),length(x))
+    sortx<-sort(x[which(x < (AD))])
+    U1 <- pi[CO]*gpdMixture(x=sortx,estimate[1,CO],estimate[2,CO],estimate[3,CO])*f12(sortx,length(x))
+    sortx<-sort(x[which(x  <=  CO)])
+    U2 <- pi[CO]*gpdMixture(x=sortx,estimate[1,CO],estimate[2,CO],estimate[3,CO])*f12(sortx,length(x))
+    R[1] <- sum(LFDR[!is.na(LFDR)] < FDRLevel)
+    R[2] <- sum(U1[!is.na(U1)] < FDRLevel) - sum(U2[!is.na(U2)] < FDRLevel) + length(x[which(x > (AD-1))])
+    BH <- RealMBHFDR(x,estimate[1,CO],estimate[2,CO],estimate[3,CO], FDRLevel = FDRLevel, M=length(x), piZero=pi[CO], frequency=count[which(count > 0)])
+    Rejection <- cbind(R[1],R[2], BH)
+    res<-list(LFDR, Rejection,E)
+    return(res)
+}
