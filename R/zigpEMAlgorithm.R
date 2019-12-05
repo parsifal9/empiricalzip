@@ -75,5 +75,6 @@ zigpEMAlgorithm <- function (x)
     zigpEstimate[2,i] <- lambdaEstimate
     zigpEstimate[3,i] <- thetaEstimate
   }
+  class(zigpEstimate) <- "zigpEstimate"
   return(zigpEstimate)
 }

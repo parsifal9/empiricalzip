@@ -69,5 +69,6 @@ gpEMAlgorithm <- function (x)
     gpEstimate[2,i] <- lambdaEstimate
     gpEstimate[3,i] <- thetaEstimate
   }
+  class(gpEstimate) <- "gpEstimate"
   return(gpEstimate)
 }

@@ -40,5 +40,6 @@ pEMAlgorithm <- function (x)
     pEstimate[2,i] <- lambdaEstimate
     pEstimate[3,i] <- 0
   }
+  class(pEstimate) <- "pEstimate"
   return(pEstimate)
 }

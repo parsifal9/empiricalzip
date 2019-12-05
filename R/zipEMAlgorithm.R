@@ -49,5 +49,6 @@ zipEMAlgorithm <- function (x)
     zipEstimate[2,i] <- lambdaEstimate
     zipEstimate[3,i] <- 0
   }
+  class(zipEstimate) <-  "zipEstimate"
   return(zipEstimate)
 }
