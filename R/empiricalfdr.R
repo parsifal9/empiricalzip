@@ -3,12 +3,13 @@
 #' calculates the faslse discovery rate
 #' @param estimate matrix with rows containg the estimates of eta, lambda, and theta
 #' @param x   the count data in correct format
+#' @param FDRLevel   the count data in correct format
 #' @keywords cats
 #' @export
 #' @examples
 #' empiricalfdr(estimate,x)
 
-empiricalfdr<-function(estimate,x){
+empiricalfdr<-function(estimate, x, FDRLevel=0.1){
     
     cf <- 10^(-10)
     count <- c(length(x[which(x==0)]), tabulate(x, nbins = max(x)))
