@@ -10,6 +10,10 @@
 
 empiricalfdr<-function(estimate,x){
     
+    cf <- 10^(-10)
+    count <- c(length(x[which(x==0)]), tabulate(x, nbins = max(x)))
+    names(count) <- c(0:max(x))
+
     M<-length(x)  
     cut <- array(NA, max(x))
     pi <- array(NA, max(x))
