@@ -81,5 +81,6 @@ empiricalfdr<-function(estimate, x, FDRLevel=0.1){
     BH <- RealMBHFDR(x,estimate[1,CO],estimate[2,CO],estimate[3,CO], FDRLevel = FDRLevel, M=length(x), piZero=pi[CO], frequency=count[which(count > 0)])
     Rejection <- cbind(R[1],R[2], BH)
     res<-list(LFDR, Rejection,E)
+    names(res)<-c("LFDR", "Rejection","E")
     return(res)
 }
