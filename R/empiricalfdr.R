@@ -80,6 +80,8 @@ empiricalfdr<-function(estimate, x, FDRLevel=0.1){
     R[2] <- sum(U1[!is.na(U1)] < FDRLevel) - sum(U2[!is.na(U2)] < FDRLevel) + length(x[which(x > (AD-1))])
     BH <- RealMBHFDR(x,estimate[1,CO],estimate[2,CO],estimate[3,CO], FDRLevel = FDRLevel, M=length(x), piZero=pi[CO], frequency=count[which(count > 0)])
     Rejection <- cbind(R[1],R[2], BH)
+    names(Rejection) <- c("One-stage procedure","Two-stage procedure","Storey’s FDR")
+    names(E) <- c("eta","lambda","theta","pi","C1","D(C1)")
     res<-list(LFDR, Rejection,E)
     names(res)<-c("LFDR", "Rejection","E")
     return(res)
