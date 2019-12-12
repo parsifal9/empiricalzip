@@ -85,9 +85,9 @@ empiricalfdr<-function(estimate, x, FDRLevel=0.1){
     names(Rejection) <- c("One-stage procedure","Two-stage procedure","Storey’s FDR")
     names(E) <- c("eta","lambda","theta","pi","C1","D(C1)")
 
-    if (is.null(names(x)))[
+    if (is.null(names(x))){
         names(x)<-c(1:length(x))
-    } 
+    }
     LFDR <- LFDR[match(names(x),names(x[order(x)]))]
     res<-list(LFDR, Rejection,E)
     names(res)<-c("LFDR", "Rejection","E")
