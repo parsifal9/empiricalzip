@@ -10,3 +10,4 @@ License: GPL (>= 2)
 Imports: Rcpp (>= 1.0.2)
 LinkingTo: Rcpp
 Depends: R (>= 3.5.0)
+RoxygenNote: 7.1.1

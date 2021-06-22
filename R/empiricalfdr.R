@@ -1,7 +1,7 @@
 #' empiricalfdr
 #'
-#' calculates the faslse discovery rate
-#' @param estimate matrix with rows containg the estimates of eta, lambda, and theta
+#' calculates the false discovery rate
+#' @param estimate matrix with rows containing the estimates of eta, lambda, and theta
 #' @param x   the count data in correct format
 #' @param FDRLevel   the count data in correct format
 #' @keywords cats
@@ -86,7 +86,7 @@ empiricalfdr<-function(estimate, x, FDRLevel=0.1){
     R[2] <- sum(U1[!is.na(U1)] < FDRLevel) - sum(U2[!is.na(U2)] < FDRLevel) + length(x[which(x > (AD-1))])
     BH <- RealMBHFDR(x,estimate[1,C1],estimate[2,C1],estimate[3,C1], FDRLevel = FDRLevel, M=length(x), piZero=pi[C1], frequency=count[which(count > 0)])
     Rejection <- cbind(R[1],R[2], BH)
-    names(Rejection) <- c("One-stage procedure","Two-stage procedure","Storey’s FDR")
+    names(Rejection) <- c("One-stage procedure","Two-stage procedure","Storey s FDR")
     names(E) <- c("eta","lambda","theta","pi","C1","D(C1)")
 
     if (is.null(names(x))){
