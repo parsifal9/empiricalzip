@@ -922,3 +922,140 @@ RealDataFDR <- function(file, k, FDRLevel)
 
 
 
+###########################################################################################
+#' @export
+
+
+my.RealDataFDR<- function (x, FDRLevel) 
+{
+    CO <- array(NA, c(2, 4))
+    AD <- array(NA, c(2, 4))
+    E <- array(NA, c(2, 4, 6))
+    R <- array(NA, c(2, 4, 2))
+    BH <- array(NA, c(2, 4))
+#    protein <- read.delim(file, sep = "", header = T)
+#    x <- protein[, (k + 1)][!is.na(protein[, (k + 1)])]
+    M <- length(x)
+    cf <- 10^(-10)
+    count <- c(length(x[which(x == 0)]), tabulate(x, nbins = max(x)))
+    names(count) <- c(0:max(x))
+    estimate <- array(NA, c(4, 3, max(x)))
+    estimate[1, , ] <- zigpEMAlgorithm(x) 
+    estimate[2, , ] <- zipEMAlgorithm(x)
+    estimate[3, , ] <- pEMAlgorithm(x)   #gpEMAlgorithm(x)
+    estimate[4, , ] <- pEMAlgorithm(x)
+    cut <- array(NA, c(2, 4, max(x)))
+    pi <- array(NA, c(4, max(x)))
+    psi <- matrix(NA, nrow = 2, ncol = max(x))
+    xi <- array(NA, c(4, max(x)))
+    for (model in 1:4) {
+        for (i in 1:max(x)) {
+            pi[model, i] <- min(1, sum(count[1:(i + 1)])/(M * 
+                f0(estimate[model, 1, i], estimate[model, 2, 
+                  i], estimate[model, 3, i], C = i)))
+            psi[1, i] <- length(x[which(x <= i)]) * (-log(sum(count[1:(i + 
+                1)] + cf)/M)) + length(x[which(x > i)]) * (-log(1 + 
+                cf - sum(count[1:(i + 1)] + cf)/M))
+            psi[2, i] <- log(M) * length(x[which(x > i)]) - sum(count[(i + 
+                2):(max(x) + 1)] * (log(count[(i + 2):(max(x) + 
+                1)] + cf)))
+            psi[2, max(x)] <- log(M) * length(x[which(x > i)]) - 
+                sum(count[max(x)] * (log(count[max(x)] + cf)))
+            xi[model, i] <- length(x[which(x <= i)]) * (-log(pi[model, 
+                i] + cf)) + length(x[which(x > i)]) * (-log(1 + 
+                cf - pi[model, i]))
+            cut[1, model, i] <- psi[2, i] + negLogLh(x = x, estimate[model, 
+                1, i], estimate[model, 2, i], estimate[model, 
+                3, i], C = i)
+            cut[2, model, i] <- psi[1, i] + negLogLh(x = x, estimate[model, 
+                1, i], estimate[model, 2, i], estimate[model, 
+                3, i], C = i)
+        }
+        CO[1, model] <- min(which(diff(sign(diff(cut[1, model, 
+            ]))) > 0) + 2, which.min(cut[1, model, ]))
+        CO[2, model] <- min(which(diff(sign(diff(cut[2, model, 
+            ]))) > 0) + 2, which.min(cut[2, model, ]))
+    }
+    for (method in 1:2) {
+        for (model in c(1, 3)) {
+            AD[method, model] <- min(max(x), ceiling(max((CO[method, 
+                model] + 1), estimate[model, 2, CO[method, model]]/(exp(estimate[model, 
+                3, CO[method, model]] - 1) - estimate[model, 
+                3, CO[method, model]]), log(length(x))/(estimate[model, 
+                3, CO[method, model]] - 1 - log(estimate[model, 
+                3, CO[method, model]])))))
+        }
+        for (model in c(2, 4)) {
+            AD[method, model] <- min(max(x), ceiling(max((CO[method, 
+                model] + 1), estimate[model, 2, CO[method, model]], 
+                log(length(x)))))
+        }
+    }
+    for (method in 1:2) {
+        for (model in 1:4) {
+            if (model == 1) {
+                E[method, model, 1] <- estimate[model, 1, CO[method, 
+                  model]]
+                E[method, model, 2] <- estimate[model, 2, CO[method, 
+                  model]]
+                E[method, model, 3] <- estimate[model, 3, CO[method, 
+                  model]]
+            }
+            else if (model == 2) {
+                E[method, model, 1] <- estimate[model, 1, CO[method, 
+                  model]]
+                E[method, model, 2] <- estimate[model, 2, CO[method, 
+                  model]]
+                E[method, model, 3] <- NA
+            }
+            else if (model == 3) {
+                E[method, model, 1] <- NA
+                E[method, model, 2] <- estimate[model, 2, CO[method, 
+                  model]]
+                E[method, model, 3] <- estimate[model, 3, CO[method, 
+                  model]]
+            }
+            else if (model == 4) {
+                E[method, model, 1] <- NA
+                E[method, model, 2] <- estimate[model, 2, CO[method, 
+                  model]]
+                E[method, model, 3] <- NA
+            }
+            E[method, model, 4] <- pi[model, CO[method, model]]
+            E[method, model, 5] <- CO[method, model]
+            E[method, model, 6] <- AD[method, model]
+            LFDR <- pi[model, CO[method, model]] * gpdMixture(x = sort(x), 
+                estimate[model, 1, CO[method, model]], estimate[model, 
+                  2, CO[method, model]], estimate[model, 3, CO[method, 
+                  model]]) * f12(sort(x), length(x))
+            U1 <- pi[model, CO[method, model]] * gpdMixture(x = sort(x[which(x < 
+                (AD[method, model]))]), estimate[model, 1, CO[method, 
+                model]], estimate[model, 2, CO[method, model]], 
+                estimate[model, 3, CO[method, model]]) * f12(sort(x[which(x < 
+                (AD[method, model]))]), length(x))
+            U2 <- pi[model, CO[method, model]] * gpdMixture(x = sort(x[which(x <= 
+                (CO[method, model]))]), estimate[model, 1, CO[method, 
+                model]], estimate[model, 2, CO[method, model]], 
+                estimate[model, 3, CO[method, model]]) * f12(sort(x[which(x <= 
+                (CO[method, model]))]), length(x))
+            R[method, model, 1] <- sum(LFDR[!is.na(LFDR)] < FDRLevel)
+            R[method, model, 2] <- sum(U1[!is.na(U1)] < FDRLevel) - 
+                sum(U2[!is.na(U2)] < FDRLevel) + length(x[which(x > 
+                (AD[method, model] - 1))])
+            BH[method, model] <- RealMBHFDR(x, estimate[model, 
+                1, CO[method, model]], estimate[model, 2, CO[method, 
+                model]], estimate[model, 3, CO[method, model]], 
+                FDRLevel = FDRLevel, M = length(x), piZero = pi[model, 
+                  CO[method, model]], frequency = count[which(count > 
+                  0)])
+        }
+    }
+    Rejection <- cbind(R[, , 1], R[, , 2], BH)
+    EstimatesC1 <- rbind(E[1, 1, ], E[1, 2, ], E[1, 3, ], E[1, 
+        4, ])
+    EstimatesC2 <- rbind(E[2, 1, ], E[2, 2, ], E[2, 3, ], E[2, 
+        4, ])
+    return(list(Rejection, EstimatesC1, EstimatesC2))
+}
+
+
